@@ -15,16 +15,23 @@ function reducer(state, { type, payload }) {
   switch (type) {
     case ACTIONS.ENTER_DIGIT: {
       if (payload.digit === "." && state.currOperand.includes(".")) {
+        // console.log(state);
+        // console.log(state.prevOperand.length);
         return state;
       }
 
       if (payload.digit === "0" && state.currOperand === "0") {
+        // console.log(state);
+        // console.log(state.prevOperand.length);
         return { ...state };
       }
 
+      // console.log(state);
+      // state.prevOperand &&
+      //   console.log("length : ", state[prevOperand].length());
       return {
         ...state,
-        currOperand: `${state.currOperand || ""} ${payload.digit}`,
+        currOperand: `${state.currOperand || ""}${payload.digit}`, //btw ${} and ${} there was a space, eliminating that space is giving right answers
       };
     }
 
