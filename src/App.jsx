@@ -14,24 +14,25 @@ export const ACTIONS = {
 function reducer(state, { type, payload }) {
   switch (type) {
     case ACTIONS.ENTER_DIGIT: {
+      if (state.overWrite) {
+        return {
+          ...state,
+          currOperand: payload.digit,
+          overWrite: false,
+        };
+      }
+
       if (payload.digit === "." && state.currOperand.includes(".")) {
-        // console.log(state);
-        // console.log(state.prevOperand.length);
         return state;
       }
 
       if (payload.digit === "0" && state.currOperand === "0") {
-        // console.log(state);
-        // console.log(state.prevOperand.length);
         return { ...state };
       }
 
-      // console.log(state);
-      // state.prevOperand &&
-      //   console.log("length : ", state[prevOperand].length());
       return {
         ...state,
-        currOperand: `${state.currOperand || ""}${payload.digit}`, //btw ${} and ${} there was a space, eliminating that space is giving right answers
+        currOperand: `${state.currOperand || ""}${payload.digit}`,
       };
     }
 
@@ -75,16 +76,32 @@ function reducer(state, { type, payload }) {
       }
       return {
         ...state,
+        overWrite: true,
         currOperand: evaluate(state),
         operator: null,
         prevOperand: null,
       };
     }
-    // case ACTIONS.CHOOSE_OPERATION:
-    //   return { state };
 
-    // case ACTIONS.DELETE_DIGIT:
-    //   return { state };
+    case ACTIONS.DELETE_DIGIT: {
+      if (state.overWrite) {
+        return {
+          overWrite: false,
+          currOperand: null,
+        };
+      }
+      if (state.currOperand == null) return;
+      if (state.currOperand.length === 1) {
+        return {
+          ...state,
+          currOperand: null,
+        };
+      }
+      return {
+        ...state,
+        currOperand: state.currOperand.slice(0, -1),
+      };
+    }
   }
 }
 
@@ -115,6 +132,16 @@ function evaluate({ prevOperand, operator, currOperand }) {
   return computation.toString();
 }
 
+const INTEGER_FORMATTER = new Intl.NumberFormat("en-IN", {
+  maximumFractionDigits: 2,
+});
+function formatOperand(operand) {
+  if (operand == null) return;
+  const [integer, decimal] = operand.split(".");
+  if (decimal == null) return INTEGER_FORMATTER.format(integer);
+  return `${INTEGER_FORMATTER.format(integer)}.${decimal}`;
+}
+
 export default function App() {
   const [{ prevOperand, operator, currOperand }, dispatch] = useReducer(
     reducer,
@@ -126,9 +153,9 @@ export default function App() {
     <div className="calculator-grid">
       <div className="output">
         <div className="previous-operand">
-          {prevOperand} {operator}
+          {formatOperand(prevOperand)} {operator}
         </div>
-        <div className="current-operand">{currOperand}</div>
+        <div className="current-operand">{formatOperand(currOperand)}</div>
       </div>
       <button
         className="span-two"
@@ -136,7 +163,9 @@ export default function App() {
       >
         AC
       </button>
-      <button>DEL</button>
+      <button onClick={() => dispatch({ type: ACTIONS.DELETE_DIGIT })}>
+        DEL
+      </button>
       <OperationButton operation="➗" dispatch={dispatch} />
       <DigitButton digit="1" dispatch={dispatch} />
       <DigitButton digit="2" dispatch={dispatch} />
